@@ -119,10 +119,10 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	opts.GeoM.Translate(g.cam.X, g.cam.Y)
 
 	playerFrame := 0
-	// activeAnimation := g.player.ActiveAnimation(int(g.player.Dx), int(g.player.Dy))
-	// if activeAnimation != nil {
-	// 	playerFrame = activeAnimation.Frame()
-	// }
+	activeAnimation := g.player.ActiveAnimation(int(g.player.Dx), int(g.player.Dy))
+	if activeAnimation != nil {
+		playerFrame = activeAnimation.Frame()
+	}
 
 	screen.DrawImage(g.player.Image.SubImage(g.playerSpritesheet.Rect(playerFrame)).(*ebiten.Image), &opts)
 	opts.GeoM.Reset()
