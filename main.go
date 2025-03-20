@@ -6,8 +6,8 @@ import (
 	"log"
 	animations "videogame/animations"
 	entities "videogame/assets/enities"
+	cam "videogame/camera"
 	spriteSheet "videogame/spritesheet"
-  cam "videogame/camera"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
@@ -90,6 +90,14 @@ func (g *Game) Draw(screen *ebiten.Image) {
       //     ),
       //   )
       // }
+			if layerIndex == 1 {
+				tileBounds := img.Bounds()
+				g.colliders = append(g.colliders, image.Rect(
+					x, y - 60,
+					x+tileBounds.Dx(),
+					y+tileBounds.Dy() - 60,
+				))
+			}
 			opts.GeoM.Translate(float64(x), float64(y))
 			opts.GeoM.Translate(g.cam.X, g.cam.Y)
 			opts.GeoM.Translate(0.0, -(float64(img.Bounds().Dy()) + 16))
