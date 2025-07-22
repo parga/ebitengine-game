@@ -5,7 +5,10 @@ import (
 )
 
 func CheckCollisionHorizontal(sprite *Sprite, colliders []image.Rectangle) {
-	for _, collider := range colliders {
+	for index, collider := range colliders {
+		if index == sprite.Id {
+			continue // if the id matches the sprite's id, skip this collider
+		}
 		if collider.Overlaps(image.Rect(int(sprite.X), int(sprite.Y), int(sprite.X)+16, int(sprite.Y)+16)) {
 			if sprite.Dx > 0 {
 				sprite.X = float64(collider.Min.X) - 16
@@ -17,7 +20,10 @@ func CheckCollisionHorizontal(sprite *Sprite, colliders []image.Rectangle) {
 }
 
 func CheckCollisionVertical(sprite *Sprite, colliders []image.Rectangle) {
-	for _, collider := range colliders {
+	for index, collider := range colliders {
+		if index == sprite.Id {
+			continue // if the id matches the sprite's id, skip this collider
+		}
 		if collider.Overlaps(image.Rect(int(sprite.X), int(sprite.Y), int(sprite.X)+16, int(sprite.Y)+16)) {
 			if sprite.Dy > 0 {
 				sprite.Y = float64(collider.Min.Y) - 16

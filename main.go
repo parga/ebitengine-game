@@ -11,7 +11,6 @@ import (
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
-	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
 type Game struct {
@@ -44,9 +43,9 @@ func setKeyBindings(player *entities.Player) {
 func (g *Game) Update() error {
 	g.player.Dx = 0
 	g.player.Dy = 0
-  setKeyBindings(g.player)
+	setKeyBindings(g.player)
 
-  entities.UpdatePlayer(g.player, g.colliders)
+	entities.UpdatePlayer(g.player, g.colliders)
 	entities.UpdateEnemies(g.enemies, g.player, g.colliders)
 	entities.UpdatePotions(g.potions, g.player)
 
@@ -64,6 +63,35 @@ func (g *Game) Update() error {
 func (g *Game) Draw(screen *ebiten.Image) {
 	screen.Fill(color.RGBA{120, 180, 255, 255})
 	opts := ebiten.DrawImageOptions{}
+	g.colliders = []image.Rectangle{}
+
+	// add the player collider to the colliders slice
+	g.colliders = append(g.colliders, image.Rect(
+		int(g.player.X),
+		int(g.player.Y),
+		int(g.player.X)+16,
+		int(g.player.Y)+16,
+	))
+
+	// add enemy colliders to the colliders slice
+	for _, enemy := range g.enemies {
+		g.colliders = append(g.colliders, image.Rect(
+			int(enemy.X),
+			int(enemy.Y),
+			int(enemy.X)+16,
+			int(enemy.Y)+16,
+		))
+	}
+
+	// add potion colliders to the colliders slice
+	for _, potion := range g.potions {
+		g.colliders = append(g.colliders, image.Rect(
+			int(potion.X),
+			int(potion.Y),
+			int(potion.X)+8,
+			int(potion.Y)+8,
+		))
+	}
 
 	// loop over the layers
 	for layerIndex, layer := range g.tilemapJSON.Layers {
@@ -72,53 +100,29 @@ func (g *Game) Draw(screen *ebiten.Image) {
 				continue
 			}
 
-			x := index % layer.Width
-			y := index / layer.Width
+			y := int(index / layer.Width)
+			x := int(index % layer.Width)
 
 			x *= 16
 			y *= 16
 
 			img := g.tilesets[layerIndex].Img(id)
-      // if layerIndex == 1 {
-      //   g.colliders = append(
-      //     g.colliders,
-      //     image.Rect(
-      //       x, 
-      //       y, 
-      //       g.tilesets[layerIndex].Img(id).Bounds().Size().X, 
-      //       g.tilesets[layerIndex].Img(id).Bounds().Dy(),
-      //     ),
-      //   )
-      // }
+
+			// Add colliders for the buildings layer
 			if layerIndex == 1 {
 				tileBounds := img.Bounds()
 				g.colliders = append(g.colliders, image.Rect(
-					x, y - 60,
+					x, y,
 					x+tileBounds.Dx(),
-					y+tileBounds.Dy() - 60,
+					y-tileBounds.Dy(),
 				))
 			}
+
+			// Translate the image to the correct position
 			opts.GeoM.Translate(float64(x), float64(y))
 			opts.GeoM.Translate(g.cam.X, g.cam.Y)
-			opts.GeoM.Translate(0.0, -(float64(img.Bounds().Dy()) + 16))
-
+			opts.GeoM.Translate(0.0, -(float64(img.Bounds().Dy())))
 			screen.DrawImage(img, &opts)
-
-			// srcX := (id - 1) % 22
-			// srcY := (id - 1) / 22
-			//
-			// srcX *= 16
-			// srcY *= 16
-			//
-			// opts.GeoM.Translate(float64(x), float64(y))
-			// opts.GeoM.Translate(g.cam.X, g.cam.Y)
-			//
-			// screen.DrawImage(
-			// 	g.tilemapImage.SubImage(
-			// 		image.Rect(srcX, srcY, srcX+16, srcY+16),
-			// 	).(*ebiten.Image),
-			// 	&opts,
-			// )
 			opts.GeoM.Reset()
 		}
 	}
@@ -135,23 +139,35 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	screen.DrawImage(g.player.Image.SubImage(g.playerSpritesheet.Rect(playerFrame)).(*ebiten.Image), &opts)
 	opts.GeoM.Reset()
 
-  entities.DrawEnemies(g.enemies, screen, g.cam)
-  entities.DrawPotions(g.potions, screen, g.cam)
+	entities.DrawEnemies(g.enemies, screen, g.cam)
+	entities.DrawPotions(g.potions, screen, g.cam)
 
+	// Draw colliders for debugging
+	// for _, collider := range g.colliders {
+	// 	vector.StrokeRect(
+	// 		screen,
+	// 		float32(collider.Min.X)+float32(g.cam.X),
+	// 		float32(collider.Min.Y)+float32(g.cam.Y),
+	// 		float32(collider.Dx()),
+	// 		float32(collider.Dy()),
+	// 		1.0,
+	// 		color.RGBA{255, 0, 0, 255},
+	// 		true,
+	// 	)
+	// }
 
-	for _, collider := range g.colliders {
-		vector.StrokeRect(
-			screen,
-			float32(collider.Min.X)+float32(g.cam.X),
-			float32(collider.Min.Y)+float32(g.cam.Y),
-			float32(collider.Dx()),
-			float32(collider.Dy()),
-			1.0,
-			color.RGBA{255, 0, 0, 255},
-			true,
-		)
-	}
-
+	// for _, potion := range g.potions {
+	// 	vector.StrokeRect(
+	// 		screen,
+	// 		float32(potion.X)+float32(g.cam.X),
+	// 		float32(potion.Y)+float32(g.cam.Y),
+	// 		float32(potion.Image.Bounds().Dx()),
+	// 		float32(potion.Image.Bounds().Dy()),
+	// 		1.0,
+	// 		color.RGBA{255, 0, 0, 255},
+	// 		true,
+	// 	)
+	// }
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh int) {
@@ -196,6 +212,7 @@ func main() {
 	game := Game{
 		player: &entities.Player{
 			Sprite: &entities.Sprite{
+				Id:    0,
 				Image: playerImg,
 				Y:     50,
 				X:     50,
@@ -212,6 +229,7 @@ func main() {
 		enemies: []*entities.Enemy{
 			{
 				Sprite: &entities.Sprite{
+					Id:    1,
 					Image: skeletonImg,
 					Y:     100,
 					X:     100,
@@ -226,6 +244,7 @@ func main() {
 			},
 			{
 				Sprite: &entities.Sprite{
+					Id:    2,
 					Image: skeletonImg,
 					Y:     200,
 					X:     200,
@@ -236,6 +255,7 @@ func main() {
 		potions: []*entities.Potion{
 			{
 				Sprite: &entities.Sprite{
+					Id:    3,
 					Image: potionImg,
 					Y:     210,
 					X:     100,
@@ -247,9 +267,7 @@ func main() {
 		tilemapImage: tilemapImage,
 		tilesets:     tilesets,
 		cam:          cam.NewCamera(0, 0),
-		colliders: []image.Rectangle{
-			image.Rect(100, 100, 116, 116),
-		},
+		colliders:    []image.Rectangle{},
 	}
 
 	if err := ebiten.RunGame(&game); err != nil {
