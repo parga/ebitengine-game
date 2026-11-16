@@ -5,7 +5,7 @@ import (
 	"image/color"
 	"log"
 	animations "videogame/animations"
-	entities "videogame/assets/enities"
+	entities "videogame/assets/entities"
 	cam "videogame/camera"
 	spriteSheet "videogame/spritesheet"
 
@@ -45,9 +45,15 @@ func (g *Game) Update() error {
 	g.player.Dy = 0
 	setKeyBindings(g.player)
 
-	entities.UpdatePlayer(g.player, g.colliders)
+	playerColliders := append([]image.Rectangle{}, g.colliders...)
+	for _, enemy := range g.enemies {
+		playerColliders = append(playerColliders, image.Rect(
+			int(enemy.X), int(enemy.Y), int(enemy.X)+16, int(enemy.Y)+16,
+		))
+	}
+	entities.UpdatePlayer(g.player, playerColliders)
 	entities.UpdateEnemies(g.enemies, g.player, g.colliders)
-	entities.UpdatePotions(g.potions, g.player)
+	g.potions = entities.UpdatePotions(g.potions, g.player)
 
 	g.cam.FollowTarget(g.player.X+8, g.player.Y+8, 320, 240)
 	g.cam.Constrain(
@@ -64,34 +70,6 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	screen.Fill(color.RGBA{120, 180, 255, 255})
 	opts := ebiten.DrawImageOptions{}
 	g.colliders = []image.Rectangle{}
-
-	// add the player collider to the colliders slice
-	g.colliders = append(g.colliders, image.Rect(
-		int(g.player.X),
-		int(g.player.Y),
-		int(g.player.X)+16,
-		int(g.player.Y)+16,
-	))
-
-	// add enemy colliders to the colliders slice
-	for _, enemy := range g.enemies {
-		g.colliders = append(g.colliders, image.Rect(
-			int(enemy.X),
-			int(enemy.Y),
-			int(enemy.X)+16,
-			int(enemy.Y)+16,
-		))
-	}
-
-	// add potion colliders to the colliders slice
-	for _, potion := range g.potions {
-		g.colliders = append(g.colliders, image.Rect(
-			int(potion.X),
-			int(potion.Y),
-			int(potion.X)+8,
-			int(potion.Y)+8,
-		))
-	}
 
 	// loop over the layers
 	for layerIndex, layer := range g.tilemapJSON.Layers {
