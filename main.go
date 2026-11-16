@@ -89,10 +89,10 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			// Add colliders for the buildings layer
 			if layerIndex == 1 {
 				tileBounds := img.Bounds()
+				buildingTop := y - tileBounds.Dy()
 				g.colliders = append(g.colliders, image.Rect(
-					x, y,
-					x+tileBounds.Dx(),
-					y-tileBounds.Dy(),
+					x, buildingTop,
+					x+tileBounds.Dx(), y,
 				))
 			}
 
